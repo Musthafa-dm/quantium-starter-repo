@@ -1,22 +1,30 @@
-import pandas as pd
-import glob
+import csv
+import os
 
-# 1) Get all CSV files in the "data" folder
-csv_files = glob.glob("data/*.csv")
+DATA_FOLDER = "data"
+OUTPUT_FILE = "formatted_data.csv"
 
-# 2) Read all CSVs and combine into one table
-all_data = pd.concat([pd.read_csv(f) for f in csv_files])
+with open(OUTPUT_FILE, "w", newline="") as out_file:
+    writer = csv.writer(out_file)
+    writer.writerow(["Sales", "Date", "Region"])  # Header
 
-# 3) Keep only rows where product is "Pink Morsel"
-pink_data = all_data[all_data["product"] == "Pink Morsel"]
+    for file_name in os.listdir(DATA_FOLDER):
+        if file_name.endswith(".csv"):
+            file_path = os.path.join(DATA_FOLDER, file_name)
 
-# 4) Create a new column "sales" = quantity × price
-pink_data["sales"] = pink_data["quantity"] * pink_data["price"]
+            with open(file_path, "r", newline="") as in_file:
+                reader = csv.DictReader(in_file)
 
-# 5) Keep only the columns we need
-final_data = pink_data[["sales", "date", "region"]]
+                for row in reader:
+                    product = row["product"].strip()
+                    quantity = int(row["quantity"])
+                    # Remove $ sign, then convert to float
+                    price = float(row["price"].replace("$", ""))
+                    date = row["date"].strip()
+                    region = row["region"].strip()
 
-# 6) Save to a new CSV file
-final_data.to_csv("output.csv", index=False)
+                    if product.lower() == "pink morsel":
+                        sales = quantity * price
+                        writer.writerow([sales, date, region])
 
-print("✅ Data processing complete! File saved as output.csv")
+print(f"✅ Finished! Saved cleaned data to '{OUTPUT_FILE}'")
